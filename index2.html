@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HangMan</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        #game-container {
+            display: flex;
+            max-width: 800px;
+            margin: auto;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+        }
+
+        #game-content {
+            flex: 1;
+            text-align: center;
+            padding: 20px;
+        }
+
+        #hangman {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        #word {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        #guessInput {
+            padding: 15px;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        #feedback {
+            font-size: 1.5rem;
+            color: red;
+            margin-bottom: 10px;
+        }
+
+        #correctLetters, #incorrectLetters {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 15px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            background-color: #4caf50;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .hangman-image {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 2rem;
+            white-space: pre;
+        }
+
+        footer {
+            margin-top: 20px;
+            font-size: 1rem;
+            color: #777;
+        }
+        footer {
+            margin-top: 25px;
+            font-size: 0.9rem; /* Increased font size */
+            color: #000; /* Changed color to black */
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="game-content">
+            <div id="hangman" class="hangman-image"></div>
+            <div id="word"></div>
+            <input type="text" id="guessInput" placeholder="Въведете буква или дума">
+            <div id="feedback"></div>
+            <div id="correctLetters">Познати букви: </div>
+            <div id="incorrectLetters">Непознати букви: </div>
+            <button onclick="makeGuess()">Направи познаване</button>
+            <button onclick="startGame()">Нова игра</button>
+            <footer>
+                <div style="font-size: 1.5rem;">22423</div>
+                &copy; 2023 PKolev20. All rights reserved
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        let secretWord;
+        let correctLetters = [];
+        let incorrectLetters = [];
+        let wrongGuesses = 0;
+
+        function chooseRandomWord() {
+            const wordList = ["Чаша", "Молив", "Кола", "Котка", "Слънце", "Книга", "Цвете", "Компютър",
+                "Музика", "Планина", "Ракия", "Часовник", "Парк", "Стол", "Телефон",
+                "Океан", "Чудо", "Театър", "Космос", "Колеж", "Паста", "Градина", "Звезда",
+                "Пътека", "Замък", "Тениска", "Летище", "Мечта", "Кафе", "Магия", "Радост",
+                "Зима", "Луна", "Бира", "Кутия", "Смях", "Ключ", "Спалня", "Пъзел", "Гъба",
+                "Сърце", "Танц", "Плаж", "Лампа", "Филм", "Огън", "Снегът", "Брилянт", "Писмо",
+                "Трактор"];
+
+            return wordList[Math.floor(Math.random() * wordList.length)].toLowerCase();
+        }
+
+        function startGame() {
+            secretWord = chooseRandomWord();
+            correctLetters = [];
+            incorrectLetters = [];
+            wrongGuesses = 0;
+            updateHangman();
+            updateWordDisplay();
+            updateFeedback("");
+            updateCorrectLetters();
+            updateIncorrectLetters();
+        }
+
+        function makeGuess() {
+            const guessInput = document.getElementById("guessInput");
+            const guess = guessInput.value.toLowerCase();
+
+            if (guess.length === 1 && guess.match(/[а-я]/)) {
+                handleLetterGuess(guess);
+            } else if (guess.length > 1 && guess.match(/[а-я]/)) {
+                handleWordGuess(guess);
+            } else {
+                updateFeedback("Невалиден вход. Опитайте отново.");
+            }
+
+            guessInput.value = "";
+        }
+
+        function handleLetterGuess(guess) {
+    const feedbackDisplay = document.getElementById("feedback");
+
+        if (correctLetters.includes(guess) || incorrectLetters.includes(guess)) {
+            updateFeedback("Вече сте опитвали тази буква. Опитайте отново.");
+            return;
+        }
+
+        if (secretWord.includes(guess)) {
+            correctLetters.push(guess);
+            updateWordDisplay();
+            updateCorrectLetters();
+
+            // Clear the error message
+            updateFeedback("");
+
+            if (!document.getElementById("word").innerText.includes("_")) {
+                updateFeedback("Поздравления! Познахте думата: " + secretWord);
+            }
+        } else {
+            incorrectLetters.push(guess);
+            wrongGuesses++;
+            updateHangman();
+            updateFeedback("Грешно познаване!");
+            updateIncorrectLetters();
+
+            if (wrongGuesses === 6) {
+                updateFeedback("Загубихте! Думата беше: " + secretWord);
+            }
+        }
+    }
+
+
+        function handleWordGuess(guess) {
+            if (guess === secretWord) {
+                correctLetters = secretWord.split('');
+                updateWordDisplay();
+                updateFeedback("Поздравления! Познахте думата: " + secretWord);
+            } else {
+                updateFeedback("Грешна дума. Опитайте отново.");
+            }
+        }
+
+        function updateWordDisplay() {
+            const wordDisplay = document.getElementById("word");
+            const displayedWord = secretWord.split('').map(char => (correctLetters.includes(char) ? char : "_")).join(' ');
+            wordDisplay.innerText = displayedWord;
+        }
+
+        function updateHangman() {
+            const hangmanDisplay = document.getElementById("hangman");
+            const hangmanFigures = [
+                "  +---+\n  |   |\n      |\n      |\n      |\n      |\n=========",
+                "  +---+\n  |   |\n  O   |\n      |\n      |\n      |\n=========",
+                "  +---+\n  |   |\n  O   |\n  |   |\n      |\n      |\n=========",
+                "  +---+\n  |   |\n  O   |\n /|   |\n      |\n      |\n=========",
+                "  +---+\n  |   |\n  O   |\n /|\\  |\n      |\n      |\n=========",
+                "  +---+\n  |   |\n  O   |\n /|\\  |\n /    |\n      |\n========="
+            ];
+
+            hangmanDisplay.innerText = hangmanFigures[wrongGuesses];
+        }
+
+        function updateFeedback(message) {
+            const feedbackDisplay = document.getElementById("feedback");
+            feedbackDisplay.innerText = message;
+        }
+
+        function updateCorrectLetters() {
+            const correctLettersDisplay = document.getElementById("correctLetters");
+            correctLettersDisplay.innerText = "Познати букви: " + correctLetters.join(', ');
+        }
+
+        function updateIncorrectLetters() {
+            const incorrectLettersDisplay = document.getElementById("incorrectLetters");
+            incorrectLettersDisplay.innerText = "Непознати букви: " + incorrectLetters.join(', ');
+        }
+    </script>
+
+</body>
+</html>
